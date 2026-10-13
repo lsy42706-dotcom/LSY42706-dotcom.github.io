@@ -1,0 +1,16 @@
+# Local editor and operating-system files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Credentials and local environment files do not belong in a public website
+.env
+.env.*
+*.pem
+*.key
+credentials.json
+
+# This site does not need dependencies or generated build output
+node_modules/
+dist/

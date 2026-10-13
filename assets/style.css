@@ -1,0 +1,106 @@
+:root {
+  color-scheme: light;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Microsoft YaHei", "PingFang SC", sans-serif;
+  color: #27352d;
+  background: #f6f8f5;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.page {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: 32px 20px;
+}
+
+.notice {
+  width: min(100%, 560px);
+  padding: clamp(40px, 9vw, 72px) clamp(24px, 7vw, 56px);
+  text-align: center;
+  background: #ffffff;
+  border: 1px solid #dfe6dd;
+  border-radius: 24px;
+  box-shadow: 0 16px 48px rgb(35 55 40 / 4%);
+}
+
+.mark {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 28px;
+  background: #edf3e9;
+  border-radius: 16px;
+}
+
+.mark-line {
+  position: absolute;
+  inset: 18px 16px;
+  border-top: 2px solid #567749;
+  border-bottom: 2px solid #567749;
+  border-radius: 1px;
+}
+
+.mark-dot {
+  position: absolute;
+  top: 12px;
+  right: 11px;
+  width: 8px;
+  height: 8px;
+  background: #567749;
+  border: 2px solid #edf3e9;
+  border-radius: 50%;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(28px, 5vw, 36px);
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  overflow-wrap: anywhere;
+}
+
+p {
+  margin: 16px 0 0;
+  color: #5e6d63;
+  font-size: 16px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .notice {
+    border-color: CanvasText;
+  }
+
+  .mark-line {
+    border-color: CanvasText;
+  }
+
+  .mark-dot {
+    background: CanvasText;
+    border-color: Canvas;
+  }
+}
