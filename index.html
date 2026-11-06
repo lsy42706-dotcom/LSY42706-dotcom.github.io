@@ -1,3 +1,47 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#070913"><title>ORBIT — 粒子星球</title><link rel="stylesheet" href="style.css"></head>
-<body><main><canvas id="scene" aria-label="可交互的粒子星球"></canvas><div class="grain"></div><header><a class="brand" href="#"><span class="brand-icon">✳</span><span>ORBIT <small>INTERACTIVE LAB</small></span></a><div class="header-right"><span class="live-dot"></span> AN INTERACTIVE EXPERIENCE <span class="index">001 / 001</span></div></header><section class="intro"><div class="eyebrow"><span></span> A WORLD AT YOUR FINGERTIPS</div><h1>掌心之间，<br><em>自有宇宙。</em></h1><p>一颗由光构成的星球，随着你的动作流转。<br>伸出手，探索属于你的宇宙。</p><button id="cameraButton"><span class="button-icon">✳</span><span>开启手势控制</span><span class="arrow">↗</span></button><div id="status" class="status"><span></span> 摄像头未开启 · 也可以拖动探索</div></section><aside class="coordinates"><span>GALACTIC COORDINATES</span><strong>23° 26′ N<br>星球轨道 / 01</strong><i></i></aside><div class="orbit-label"><span>✦</span> PARTICLE PLANET <small>EST. IN THE COSMOS</small></div><section class="guide"><div class="guide-title"><span>HOW TO EXPLORE</span><small>探索指南 / 01—03</small></div><div class="guide-items"><div><b>01</b><span class="gesture">↻</span><p><strong>食指指向</strong><small>指向上下左右 · 收起停止</small></p></div><div><b>02</b><span class="gesture">✊</span><p><strong>握拳并向后移动</strong><small>远离星球</small></p></div><div><b>03</b><span class="gesture">✋</span><p><strong>张开手并向前移动</strong><small>靠近星球</small></p></div></div></section><footer><span>DRAG TO ROTATE <i>·</i> SCROLL TO ZOOM</span><span>MADE OF STARDUST ✦</span></footer><div class="camera-preview"><video id="video" playsinline muted></video><div class="preview-label"><span></span> HAND TRACKING</div></div></main><script src="https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script><script src="app.js?v=pastel-20261106"></script></body></html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090a10">
+  <meta name="description" content="用手势或鼠标探索一颗由光点构成的星球。">
+  <title>ORBIT — 粒子星球</title>
+  <link rel="stylesheet" href="style.css?v=editorial-20261106">
+</head>
+<body>
+<main class="experience">
+  <canvas id="scene" aria-label="可交互的粒子星球"></canvas>
+  <div class="vignette" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="ORBIT 首页"><span class="brand-mark" aria-hidden="true"></span><span>ORBIT</span></a>
+    <div class="top-note">交互实验 <span>/</span> 粒子星球</div>
+  </header>
+
+  <section class="intro" aria-labelledby="page-title">
+    <div class="eyebrow"><span class="eyebrow-line"></span> INTERACTIVE STUDY <span class="eyebrow-number">01</span></div>
+    <h1 id="page-title">光的<span>轨迹</span></h1>
+    <p>一颗可以触碰的粒子星球。<br>以手势改变视角，在光与轨道之间探索。</p>
+    <button id="cameraButton" type="button"><span class="button-icon" aria-hidden="true">◎</span><span>开启手势控制</span><span class="button-arrow" aria-hidden="true">↗</span></button>
+    <div id="status" class="status" role="status" aria-live="polite"><span></span> 摄像头未开启 · 也可以拖动探索</div>
+  </section>
+
+  <div class="scene-caption" aria-hidden="true"><span>PARTICLE STUDY</span><span class="caption-line"></span><span>01 / 01</span></div>
+
+  <section class="guide" aria-label="操作指南">
+    <div class="guide-heading"><span>操作指南</span><small>CONTROLS</small></div>
+    <div class="guide-items">
+      <div class="guide-item"><span class="item-no">01</span><p><strong>食指指向</strong><small>上下左右转动视角</small></p></div>
+      <div class="guide-item"><span class="item-no">02</span><p><strong>握拳后移</strong><small>远离星球</small></p></div>
+      <div class="guide-item"><span class="item-no">03</span><p><strong>张手前移</strong><small>靠近星球</small></p></div>
+    </div>
+    <p class="guide-mouse">鼠标拖动旋转 <span> / </span> 滚轮缩放</p>
+  </section>
+
+  <div class="camera-preview"><video id="video" playsinline muted></video><div class="preview-label"><span></span> 手势追踪</div></div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+<script src="app.js?v=pastel-20261106"></script>
+</body>
+</html>
