@@ -12,29 +12,28 @@
   g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(.16,'rgba(255,255,255,.95)'); g.addColorStop(.45,'rgba(255,255,255,.3)'); g.addColorStop(1,'rgba(255,255,255,0)'); ctx.fillStyle=g;ctx.fillRect(0,0,64,64);
   const texture = new THREE.CanvasTexture(glowCanvas);
   function points(positions, colors, size, opacity=1) { const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geo.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));return new THREE.Points(geo,new THREE.PointsMaterial({size,map:texture,vertexColors:true,transparent:true,opacity,depthWrite:false,blending:THREE.AdditiveBlending,sizeAttenuation:true})); }
-  // A deep indigo base with aurora-like violet, cyan and sparse warm gold highlights.
-  const color=new THREE.Color(), surfaceCount=innerWidth<800?14000:24000;
-  const deep=new THREE.Color('#10265d'), blue=new THREE.Color('#237bd2'), violet=new THREE.Color('#8a4cf2'), cyan=new THREE.Color('#70e8f5'), gold=new THREE.Color('#ffd18a');
+  // Soft, continuous pastel gradients across a dense spherical shell.
+  const color=new THREE.Color(), surfaceCount=innerWidth<800?22000:38000;
+  const ice=new THREE.Color('#b9eeff'), lavender=new THREE.Color('#d7c5ff'), rose=new THREE.Color('#ffd4e9'), pearl=new THREE.Color('#fff2e3');
   const surface=[{p:[],c:[]},{p:[],c:[]}];
   for(let i=0;i<surfaceCount;i++){
     const y=1-Math.random()*2, a=Math.random()*Math.PI*2, radial=Math.sqrt(1-y*y);
     const x=Math.cos(a)*radial,z=Math.sin(a)*radial;
     const r=1.45+(Math.random()-.5)*.085;
-    const flow=Math.sin(y*8+x*4+Math.sin(z*5)*1.6), detail=Math.cos(z*9-y*5+x*3);
-    const light=Math.random(), bright=light>.86;
-    color.copy(deep).lerp(blue,.25+.4*(flow*.5+.5));
-    if(flow>.05)color.lerp(violet,Math.min(.78,flow*.75));
-    if(detail>.55)color.lerp(cyan,(detail-.55)*.65);
-    if(bright && detail>.1)color.lerp(gold,.55+Math.random()*.3);
+    const gradient=Math.max(0,Math.min(1,(y+1)*.5 + .13*Math.sin(x*3+z*2)));
+    if(gradient<.5)color.copy(ice).lerp(lavender,gradient*2);
+    else color.copy(lavender).lerp(rose,(gradient-.5)*2);
+    const bright=Math.random()>.88;
+    if(bright)color.lerp(pearl,.18+Math.random()*.22);
     const group=surface[bright?1:0];group.p.push(x*r,y*r,z*r);group.c.push(color.r,color.g,color.b);
   }
-  const fineSurface=points(surface[0].p,surface[0].c,.055,.95);
-  const highlights=points(surface[1].p,surface[1].c,.105,.95);
+  const fineSurface=points(surface[0].p,surface[0].c,.047,.83);
+  const highlights=points(surface[1].p,surface[1].c,.09,.9);
   planet.add(fineSurface,highlights);
   const core=new THREE.Mesh(new THREE.SphereGeometry(1.4,48,32),new THREE.MeshBasicMaterial({color:0x090c22}));planet.add(core);
   const atmosphere=new THREE.Mesh(new THREE.SphereGeometry(1.57,48,32),new THREE.ShaderMaterial({
     uniforms:{},vertexShader:'varying vec3 vNormal; varying vec3 vView; void main(){ vec4 mv=modelViewMatrix*vec4(position,1.0); vNormal=normalize(normalMatrix*normal); vView=normalize(-mv.xyz); gl_Position=projectionMatrix*mv; }',
-    fragmentShader:'varying vec3 vNormal; varying vec3 vView; void main(){ float rim=pow(1.0-abs(dot(normalize(vNormal),normalize(vView))),3.0); gl_FragColor=vec4(0.34,0.30,1.0,rim*0.4); }',
+    fragmentShader:'varying vec3 vNormal; varying vec3 vView; void main(){ float rim=pow(1.0-abs(dot(normalize(vNormal),normalize(vView))),3.0); gl_FragColor=vec4(0.48,0.62,1.0,rim*0.32); }',
     transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.FrontSide
   }));planet.add(atmosphere);
   const rings=[];
