@@ -1,25 +1,3 @@
 <!doctype html>
-<html lang="zh-Hans">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="网站准备中，内容将在准备好后上线。">
-    <meta name="color-scheme" content="light">
-    <meta name="theme-color" content="#f6f8f5">
-    <title>网站准备中</title>
-    <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="./assets/style.css">
-  </head>
-  <body>
-    <main class="page">
-      <section class="notice" aria-labelledby="page-title">
-        <div class="mark" aria-hidden="true">
-          <span class="mark-line"></span>
-          <span class="mark-dot"></span>
-        </div>
-        <h1 id="page-title">网站准备中</h1>
-        <p>内容将在准备好后上线。</p>
-      </section>
-    </main>
-  </body>
-</html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#070913"><title>ORBIT — 粒子星球</title><link rel="stylesheet" href="style.css"></head>
+<body><main><canvas id="scene" aria-label="可交互的粒子星球"></canvas><div class="grain"></div><header><a class="brand" href="#"><span class="brand-icon">✳</span><span>ORBIT <small>INTERACTIVE LAB</small></span></a><div class="header-right"><span class="live-dot"></span> AN INTERACTIVE EXPERIENCE <span class="index">001 / 001</span></div></header><section class="intro"><div class="eyebrow"><span></span> A WORLD AT YOUR FINGERTIPS</div><h1>掌心之间，<br><em>自有宇宙。</em></h1><p>一颗由光构成的星球，随着你的动作流转。<br>伸出手，探索属于你的宇宙。</p><button id="cameraButton"><span class="button-icon">✳</span><span>开启手势控制</span><span class="arrow">↗</span></button><div id="status" class="status"><span></span> 摄像头未开启 · 也可以拖动探索</div></section><aside class="coordinates"><span>GALACTIC COORDINATES</span><strong>23° 26′ N<br>星球轨道 / 01</strong><i></i></aside><div class="orbit-label"><span>✦</span> PARTICLE PLANET <small>EST. IN THE COSMOS</small></div><section class="guide"><div class="guide-title"><span>HOW TO EXPLORE</span><small>探索指南 / 01—03</small></div><div class="guide-items"><div><b>01</b><span class="gesture">↻</span><p><strong>旋转手掌</strong><small>旋转视角</small></p></div><div><b>02</b><span class="gesture">✊</span><p><strong>握拳并向后移动</strong><small>远离星球</small></p></div><div><b>03</b><span class="gesture">✋</span><p><strong>张开手并向前移动</strong><small>靠近星球</small></p></div></div></section><footer><span>DRAG TO ROTATE <i>·</i> SCROLL TO ZOOM</span><span>MADE OF STARDUST ✦</span></footer><div class="camera-preview"><video id="video" playsinline muted></video><div class="preview-label"><span></span> HAND TRACKING</div></div></main><script src="https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script><script src="app.js"></script></body></html>
