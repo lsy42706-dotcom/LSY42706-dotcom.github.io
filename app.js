@@ -42,36 +42,39 @@
     const ring=points(p,c,layer===0?.055:.047,.9);ring.rotation.x=1.08;ring.rotation.z=layer===0?-.24:.19;planet.add(ring);rings.push(ring);
   }
   const stars=[],starColors=[];for(let i=0;i<900;i++){let a=Math.random()*Math.PI*2, y=Math.random()*2-1,r=25+Math.random()*35,s=Math.sqrt(1-y*y);stars.push(Math.cos(a)*s*r,y*r,Math.sin(a)*s*r);let v=.25+Math.random()*.65;starColors.push(v,v,v);}scene.add(points(stars,starColors,.11,.8));
-  let yaw=.12,targetYaw=.12,pitch=.12,distance=8.5,targetDistance=8.5, dragging=false,lastX=0,lastY=0, lastHand=null, mode='';
+  let yaw=.12,targetYaw=.12,pitch=.12,distance=8.5,targetDistance=8.5, dragging=false,lastX=0,lastY=0, lastHand=null, mode='', fingerX=0, fingerY=0, lastHandTime=0, lastFrameTime=performance.now();
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.setViewOffset(w,h,w<800?0:-w*.19,w<800?-h*.14:0,w,h);camera.updateProjectionMatrix();}window.addEventListener('resize',resize);resize();
   canvas.addEventListener('pointerdown',e=>{dragging=true;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(e.pointerId)});canvas.addEventListener('pointermove',e=>{if(!dragging)return;targetYaw-=(e.clientX-lastX)*.008;pitch=clamp(pitch+(e.clientY-lastY)*.005,-1.2,1.2);lastX=e.clientX;lastY=e.clientY});canvas.addEventListener('pointerup',()=>dragging=false);canvas.addEventListener('pointercancel',()=>dragging=false);canvas.addEventListener('wheel',e=>{e.preventDefault();targetDistance=clamp(targetDistance+e.deltaY*.005,3.8,17)},{passive:false});
   function setStatus(message,active=false){status.classList.toggle('active',active);status.innerHTML='<span></span> '+message;}
   function handResults(results){
     const lm=results.multiHandLandmarks?.[0];
-    if(!lm){lastHand=null;mode='';setStatus('请将一只手放入画面',true);return;}
+    if(!lm){lastHand=null;mode='';fingerX=0;fingerY=0;setStatus('请将一只手放入画面',true);return;}
+    lastHandTime=performance.now();
     const dist=(a,b)=>Math.hypot(lm[a].x-lm[b].x,lm[a].y-lm[b].y);
     const palm=dist(0,9);
-    const extended=[8,12,16,20].filter((tip,i)=>dist(tip,0)>dist([6,10,14,18][i],0)*1.12).length;
+    const isExtended=(tip,base,joint)=>dist(tip,base)>dist(joint,base)*1.35;
+    const indexExtended=isExtended(8,5,6);
+    const otherExtended=[isExtended(12,9,10),isExtended(16,13,14),isExtended(20,17,18)].filter(Boolean).length;
     const thumb=dist(4,17)>dist(3,17)*1.08;
-    const current=extended>=4&&thumb?'open':extended<=1?'fist':'rotate';
-    // Average the bases of three fingers to reduce landmark jitter. Rotation works
-    // across pose changes, so moving between open hand and fist does not lose input.
-    const mx=(lm[5].x+lm[9].x+lm[17].x)/3, my=(lm[5].y+lm[9].y+lm[17].y)/3;
-    const angle=Math.atan2(mx-lm[0].x, -(my-lm[0].y));
-    if(lastHand){
-      let delta=angle-lastHand.angle;
-      while(delta>Math.PI)delta-=Math.PI*2;
-      while(delta< -Math.PI)delta+=Math.PI*2;
-      if(Math.abs(delta)<.8) targetYaw+=delta*2.4;
+    const current=indexExtended && otherExtended<=1?'point':indexExtended && otherExtended>=3 && thumb?'open':!indexExtended && otherExtended===0?'fist':'idle';
+    if(current==='point'){
+      // Camera video is mirrored: invert X so the indicated screen direction is intuitive.
+      const aspect=video.videoWidth && video.videoHeight?video.videoWidth/video.videoHeight:4/3;
+      const dx=-(lm[8].x-lm[5].x)*aspect,dy=-(lm[8].y-lm[5].y);
+      const length=Math.hypot(dx,dy);
+      if(length>.025){fingerX+=((dx/length)-fingerX)*.45;fingerY+=((dy/length)-fingerY)*.45;}
+      else {fingerX=0;fingerY=0;}
+    }else {fingerX=0;fingerY=0;}
+    if(lastHand && mode===current){
       const change=(palm-lastHand.palm)/Math.max(lastHand.palm,.02);
-      if(mode===current && current==='fist'&&change<-.002)targetDistance=clamp(targetDistance+Math.min(.45,Math.pow(-change*10,1.6)*.18),3.8,17);
-      if(mode===current && current==='open'&&change>.002)targetDistance=clamp(targetDistance-Math.min(.5,Math.sqrt(change*10)*.25),3.8,17);
+      if(current==='fist'&&change<-.002)targetDistance=clamp(targetDistance+Math.min(.45,Math.pow(-change*10,1.6)*.18),3.8,17);
+      if(current==='open'&&change>.002)targetDistance=clamp(targetDistance-Math.min(.5,Math.sqrt(change*10)*.25),3.8,17);
     }
-    lastHand={angle,palm};mode=current;
-    setStatus(current==='fist'?'已识别握拳 · 向后移动以远离':current==='open'?'已识别张开手掌 · 向前移动以靠近':'手势追踪中 · 旋转手掌来转动星球',true);
+    lastHand={palm};mode=current;
+    setStatus(current==='point'?'食指指向控制中 · 收起食指停止':current==='fist'?'已识别握拳 · 向后移动以远离':current==='open'?'已识别张开手掌 · 向前移动以靠近':'伸出食指并指向想要转动的方向',true);
   }
   let stream=null, running=false;
-  button.addEventListener('click',async()=>{if(running){running=false;stream?.getTracks().forEach(t=>t.stop());video.srcObject=null;document.querySelector('.camera-preview').classList.remove('visible');button.querySelector('span:nth-child(2)').textContent='开启手势控制';setStatus('摄像头未开启 · 也可以拖动探索');lastHand=null;return;}if(!window.Hands){setStatus('手势模型加载失败，请检查网络后刷新');return;}button.disabled=true;setStatus('正在启动摄像头与手势模型…');try{stream=await navigator.mediaDevices.getUserMedia({video:{width:640,height:480,facingMode:'user'},audio:false});video.srcObject=stream;await video.play();const hands=new Hands({locateFile:file=>'https://cdn.jsdelivr.net/npm/@mediapipe/hands/'+file});hands.setOptions({maxNumHands:1,modelComplexity:1,minDetectionConfidence:.7,minTrackingConfidence:.6});hands.onResults(handResults);running=true;document.querySelector('.camera-preview').classList.add('visible');button.querySelector('span:nth-child(2)').textContent='关闭手势控制';setStatus('请将一只手放入画面',true);const tick=async()=>{if(!running)return;try{await hands.send({image:video});requestAnimationFrame(tick)}catch(error){running=false;stream?.getTracks().forEach(t=>t.stop());document.querySelector('.camera-preview').classList.remove('visible');button.querySelector('span:nth-child(2)').textContent='开启手势控制';setStatus('手势识别中断，请重试');}};tick();}catch(error){stream?.getTracks().forEach(t=>t.stop());setStatus('无法开启摄像头，请检查权限或使用鼠标操作');}finally{button.disabled=false;}});
-  function animate(){requestAnimationFrame(animate);yaw+=(targetYaw-yaw)*.25;distance+=(targetDistance-distance)*.08;camera.position.set(distance*Math.sin(yaw)*Math.cos(pitch),distance*Math.sin(pitch),distance*Math.cos(yaw)*Math.cos(pitch));camera.lookAt(0,0,0);planet.rotation.y+=.0006;const t=performance.now()*.001;atmosphere.material.opacity=1;rings[0].rotation.y=t*.012;rings[1].rotation.y=-t*.008;renderer.render(scene,camera);}animate();
+  button.addEventListener('click',async()=>{if(running){running=false;stream?.getTracks().forEach(t=>t.stop());video.srcObject=null;document.querySelector('.camera-preview').classList.remove('visible');button.querySelector('span:nth-child(2)').textContent='开启手势控制';setStatus('摄像头未开启 · 也可以拖动探索');lastHand=null;mode='';fingerX=0;fingerY=0;return;}if(!window.Hands){setStatus('手势模型加载失败，请检查网络后刷新');return;}button.disabled=true;setStatus('正在启动摄像头与手势模型…');try{stream=await navigator.mediaDevices.getUserMedia({video:{width:640,height:480,facingMode:'user'},audio:false});video.srcObject=stream;await video.play();const hands=new Hands({locateFile:file=>'https://cdn.jsdelivr.net/npm/@mediapipe/hands/'+file});hands.setOptions({maxNumHands:1,modelComplexity:1,minDetectionConfidence:.7,minTrackingConfidence:.6});hands.onResults(handResults);running=true;document.querySelector('.camera-preview').classList.add('visible');button.querySelector('span:nth-child(2)').textContent='关闭手势控制';setStatus('请将一只手放入画面',true);const tick=async()=>{if(!running)return;try{await hands.send({image:video});requestAnimationFrame(tick)}catch(error){running=false;stream?.getTracks().forEach(t=>t.stop());document.querySelector('.camera-preview').classList.remove('visible');button.querySelector('span:nth-child(2)').textContent='开启手势控制';setStatus('手势识别中断，请重试');}};tick();}catch(error){stream?.getTracks().forEach(t=>t.stop());setStatus('无法开启摄像头，请检查权限或使用鼠标操作');}finally{button.disabled=false;}});
+  function animate(){requestAnimationFrame(animate);const now=performance.now(),dt=Math.min((now-lastFrameTime)/1000,.05);lastFrameTime=now;if(running && mode==='point' && now-lastHandTime<300){const axis=v=>Math.abs(v)<.18?0:(Math.abs(v)-.18)/.82*Math.sign(v);targetYaw+=axis(fingerX)*1.35*dt;pitch=clamp(pitch+axis(fingerY)*1.05*dt,-1.2,1.2);}yaw+=(targetYaw-yaw)*.25;distance+=(targetDistance-distance)*.08;camera.position.set(distance*Math.sin(yaw)*Math.cos(pitch),distance*Math.sin(pitch),distance*Math.cos(yaw)*Math.cos(pitch));camera.lookAt(0,0,0);planet.rotation.y+=.0006;const t=performance.now()*.001;atmosphere.material.opacity=1;rings[0].rotation.y=t*.012;rings[1].rotation.y=-t*.008;renderer.render(scene,camera);}animate();
 })();
