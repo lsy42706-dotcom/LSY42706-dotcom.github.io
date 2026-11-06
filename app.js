@@ -12,24 +12,29 @@
   g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(.16,'rgba(255,255,255,.95)'); g.addColorStop(.45,'rgba(255,255,255,.3)'); g.addColorStop(1,'rgba(255,255,255,0)'); ctx.fillStyle=g;ctx.fillRect(0,0,64,64);
   const texture = new THREE.CanvasTexture(glowCanvas);
   function points(positions, colors, size, opacity=1) { const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geo.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));return new THREE.Points(geo,new THREE.PointsMaterial({size,map:texture,vertexColors:true,transparent:true,opacity,depthWrite:false,blending:THREE.AdditiveBlending,sizeAttenuation:true})); }
-  // Dense, layered shell: cool oceans, violet clouds, and warm luminous highlights.
+  // A deep indigo base with aurora-like violet, cyan and sparse warm gold highlights.
   const color=new THREE.Color(), surfaceCount=innerWidth<800?14000:24000;
+  const deep=new THREE.Color('#10265d'), blue=new THREE.Color('#237bd2'), violet=new THREE.Color('#8a4cf2'), cyan=new THREE.Color('#70e8f5'), gold=new THREE.Color('#ffd18a');
   const surface=[{p:[],c:[]},{p:[],c:[]}];
   for(let i=0;i<surfaceCount;i++){
     const y=1-Math.random()*2, a=Math.random()*Math.PI*2, radial=Math.sqrt(1-y*y);
     const x=Math.cos(a)*radial,z=Math.sin(a)*radial;
     const r=1.45+(Math.random()-.5)*.085;
-    const cloud=Math.sin(y*9+x*5+Math.sin(z*6))*Math.cos(z*5-y*4);
-    const hue=cloud>.35 ? .79+Math.random()*.09 : cloud<-.4 ? .49+Math.random()*.055 : .58+Math.random()*.13;
-    color.setHSL(hue,.82,.47+Math.random()*.24);
-    const group=surface[Math.random()<.14?1:0];group.p.push(x*r,y*r,z*r);group.c.push(color.r,color.g,color.b);
+    const flow=Math.sin(y*8+x*4+Math.sin(z*5)*1.6), detail=Math.cos(z*9-y*5+x*3);
+    const light=Math.random(), bright=light>.86;
+    color.copy(deep).lerp(blue,.25+.4*(flow*.5+.5));
+    if(flow>.05)color.lerp(violet,Math.min(.78,flow*.75));
+    if(detail>.55)color.lerp(cyan,(detail-.55)*.65);
+    if(bright && detail>.1)color.lerp(gold,.55+Math.random()*.3);
+    const group=surface[bright?1:0];group.p.push(x*r,y*r,z*r);group.c.push(color.r,color.g,color.b);
   }
-  planet.add(points(surface[0].p,surface[0].c,.052,.92));
-  planet.add(points(surface[1].p,surface[1].c,.105,.9));
+  const fineSurface=points(surface[0].p,surface[0].c,.055,.95);
+  const highlights=points(surface[1].p,surface[1].c,.105,.95);
+  planet.add(fineSurface,highlights);
   const core=new THREE.Mesh(new THREE.SphereGeometry(1.4,48,32),new THREE.MeshBasicMaterial({color:0x090c22}));planet.add(core);
   const atmosphere=new THREE.Mesh(new THREE.SphereGeometry(1.57,48,32),new THREE.ShaderMaterial({
     uniforms:{},vertexShader:'varying vec3 vNormal; varying vec3 vView; void main(){ vec4 mv=modelViewMatrix*vec4(position,1.0); vNormal=normalize(normalMatrix*normal); vView=normalize(-mv.xyz); gl_Position=projectionMatrix*mv; }',
-    fragmentShader:'varying vec3 vNormal; varying vec3 vView; void main(){ float rim=pow(1.0-abs(dot(normalize(vNormal),normalize(vView))),3.0); gl_FragColor=vec4(0.20,0.55,1.0,rim*0.3); }',
+    fragmentShader:'varying vec3 vNormal; varying vec3 vView; void main(){ float rim=pow(1.0-abs(dot(normalize(vNormal),normalize(vView))),3.0); gl_FragColor=vec4(0.34,0.30,1.0,rim*0.4); }',
     transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.FrontSide
   }));planet.add(atmosphere);
   const rings=[];
@@ -53,11 +58,11 @@
     lastHandTime=performance.now();
     const dist=(a,b)=>Math.hypot(lm[a].x-lm[b].x,lm[a].y-lm[b].y);
     const palm=dist(0,9);
-    const isExtended=(tip,base,joint)=>dist(tip,base)>dist(joint,base)*1.35;
+    const isExtended=(tip,base,joint)=>dist(tip,base)>dist(joint,base)*1.15;
     const indexExtended=isExtended(8,5,6);
     const otherExtended=[isExtended(12,9,10),isExtended(16,13,14),isExtended(20,17,18)].filter(Boolean).length;
     const thumb=dist(4,17)>dist(3,17)*1.08;
-    const current=indexExtended && otherExtended<=1?'point':indexExtended && otherExtended>=3 && thumb?'open':!indexExtended && otherExtended===0?'fist':'idle';
+    const current=indexExtended && otherExtended>=3 && thumb?'open':indexExtended?'point':otherExtended===0?'fist':'idle';
     if(current==='point'){
       // Camera video is mirrored: invert X so the indicated screen direction is intuitive.
       const aspect=video.videoWidth && video.videoHeight?video.videoWidth/video.videoHeight:4/3;
@@ -72,9 +77,10 @@
       if(current==='open'&&change>.002)targetDistance=clamp(targetDistance-Math.min(.5,Math.sqrt(change*10)*.25),3.8,17);
     }
     lastHand={palm};mode=current;
-    setStatus(current==='point'?'食指指向控制中 · 收起食指停止':current==='fist'?'已识别握拳 · 向后移动以远离':current==='open'?'已识别张开手掌 · 向前移动以靠近':'伸出食指并指向想要转动的方向',true);
+    const arrow=Math.abs(fingerX)>Math.abs(fingerY)?(fingerX>0?'→':'←'):(fingerY>0?'↑':'↓');
+    setStatus(current==='point'?'食指方向 '+arrow+' · 收起食指停止':current==='fist'?'已识别握拳 · 向后移动以远离':current==='open'?'已识别张开手掌 · 向前移动以靠近':'伸出食指并指向想要转动的方向',true);
   }
   let stream=null, running=false;
   button.addEventListener('click',async()=>{if(running){running=false;stream?.getTracks().forEach(t=>t.stop());video.srcObject=null;document.querySelector('.camera-preview').classList.remove('visible');button.querySelector('span:nth-child(2)').textContent='开启手势控制';setStatus('摄像头未开启 · 也可以拖动探索');lastHand=null;mode='';fingerX=0;fingerY=0;return;}if(!window.Hands){setStatus('手势模型加载失败，请检查网络后刷新');return;}button.disabled=true;setStatus('正在启动摄像头与手势模型…');try{stream=await navigator.mediaDevices.getUserMedia({video:{width:640,height:480,facingMode:'user'},audio:false});video.srcObject=stream;await video.play();const hands=new Hands({locateFile:file=>'https://cdn.jsdelivr.net/npm/@mediapipe/hands/'+file});hands.setOptions({maxNumHands:1,modelComplexity:1,minDetectionConfidence:.7,minTrackingConfidence:.6});hands.onResults(handResults);running=true;document.querySelector('.camera-preview').classList.add('visible');button.querySelector('span:nth-child(2)').textContent='关闭手势控制';setStatus('请将一只手放入画面',true);const tick=async()=>{if(!running)return;try{await hands.send({image:video});requestAnimationFrame(tick)}catch(error){running=false;stream?.getTracks().forEach(t=>t.stop());document.querySelector('.camera-preview').classList.remove('visible');button.querySelector('span:nth-child(2)').textContent='开启手势控制';setStatus('手势识别中断，请重试');}};tick();}catch(error){stream?.getTracks().forEach(t=>t.stop());setStatus('无法开启摄像头，请检查权限或使用鼠标操作');}finally{button.disabled=false;}});
-  function animate(){requestAnimationFrame(animate);const now=performance.now(),dt=Math.min((now-lastFrameTime)/1000,.05);lastFrameTime=now;if(running && mode==='point' && now-lastHandTime<300){const axis=v=>Math.abs(v)<.18?0:(Math.abs(v)-.18)/.82*Math.sign(v);targetYaw+=axis(fingerX)*1.35*dt;pitch=clamp(pitch+axis(fingerY)*1.05*dt,-1.2,1.2);}yaw+=(targetYaw-yaw)*.25;distance+=(targetDistance-distance)*.08;camera.position.set(distance*Math.sin(yaw)*Math.cos(pitch),distance*Math.sin(pitch),distance*Math.cos(yaw)*Math.cos(pitch));camera.lookAt(0,0,0);planet.rotation.y+=.0006;const t=performance.now()*.001;atmosphere.material.opacity=1;rings[0].rotation.y=t*.012;rings[1].rotation.y=-t*.008;renderer.render(scene,camera);}animate();
+  function animate(){requestAnimationFrame(animate);const now=performance.now(),dt=Math.min((now-lastFrameTime)/1000,.05);lastFrameTime=now;if(running && mode==='point' && now-lastHandTime<1200){const axis=v=>Math.abs(v)<.18?0:(Math.abs(v)-.18)/.82*Math.sign(v);targetYaw+=axis(fingerX)*1.35*dt;pitch=clamp(pitch+axis(fingerY)*1.05*dt,-1.2,1.2);}yaw+=(targetYaw-yaw)*.25;distance+=(targetDistance-distance)*.08;camera.position.set(distance*Math.sin(yaw)*Math.cos(pitch),distance*Math.sin(pitch),distance*Math.cos(yaw)*Math.cos(pitch));camera.lookAt(0,0,0);planet.rotation.y+=.0006;const t=performance.now()*.001;atmosphere.material.opacity=1;highlights.material.opacity=.78+.17*(.5+.5*Math.sin(t*1.7));rings[0].rotation.y=t*.012;rings[1].rotation.y=-t*.008;renderer.render(scene,camera);}animate();
 })();
